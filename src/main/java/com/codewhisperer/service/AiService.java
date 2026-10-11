@@ -36,17 +36,28 @@ public class AiService {
         String model = "gemini-3-flash-preview";
 
         String prompt = """
-                Improve the following Java code.
-
-                Requirements:
-                - Preserve the original functionality.
-                - Use meaningful variable names.
-                - Improve formatting and readability.
-                - Keep class and method signatures unchanged.
-                - Do not introduce external dependencies.
-                - Return ONLY Java code.
-                - Do not include Markdown.
-
+                        You are an expert Java code optimization assistant.
+                
+                        Analyze and improve the following Java code.
+                
+                        Requirements:
+                        1. Preserve the original functionality and output.
+                        2. Reduce unnecessary code length wherever possible.
+                        3. Remove redundant statements and repeated logic.
+                        4. Simplify loops and conditional statements when safe.
+                        5. Use concise but meaningful variable names.
+                        6. Improve readability and maintainability.
+                        7. Avoid unnecessary classes, methods, and variables.
+                        8. Keep existing public class and method signatures unchanged.
+                        9. Do not introduce external dependencies.
+                        10. Prefer shorter code only when it remains clear and correct.
+                        11. Return ONLY complete Java code.
+                        12. Do not include Markdown or explanations.
+                
+                        Important:
+                        The improved code should be shorter than the original
+                        whenever safe simplifications are possible.
+                        Do not sacrifice correctness just to reduce line count.
                 Java code:
                 """ + originalCode;
 
