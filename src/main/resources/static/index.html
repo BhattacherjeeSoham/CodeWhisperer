@@ -1,0 +1,277 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CodeWhisperer - Java Code Analyzer</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          background: #f4f6fa;
+          margin: 0;
+          color: #243047;
+        }
+        textarea::placeholder {
+        color: #9ca3af;
+        font-style: italic;
+    }
+
+        header {
+          background: #253b60;
+          color: white;
+          padding: 22px 8%;
+        }
+
+        header h1 { margin: 0 0 6px; }
+        header p { margin: 0; color: #d8e2f2; }
+
+        main {
+          max-width: 1100px;
+          margin: 25px auto;
+          padding: 0 16px;
+        }
+
+        .panel {
+          background: white;
+          border: 1px solid #e0e5ec;
+          border-radius: 8px;
+          padding: 20px;
+          margin-bottom: 20px;
+        }
+
+        h2 { font-size: 19px; margin-top: 0; }
+
+        textarea, pre {
+          box-sizing: border-box;
+          width: 100%;
+          font-family: Consolas, monospace;
+          font-size: 14px;
+          line-height: 1.6;
+          border-radius: 5px;
+        }
+
+        textarea {
+          height: 230px;
+          padding: 14px;
+          border: 1px solid #ccd5e2;
+          resize: vertical;
+        }
+
+        pre {
+          background: #f1f4f8;
+          padding: 14px;
+          overflow-x: auto;
+          white-space: pre;
+          min-height: 160px;
+        }
+
+        button {
+          background: #3169d1;
+          color: white;
+          border: none;
+          padding: 11px 22px;
+          border-radius: 5px;
+          cursor: pointer;
+          margin-top: 12px;
+        }
+
+        button:hover { background: #2455af; }
+        button:disabled { opacity: .6; cursor: wait; }
+
+        .metrics, .comparison {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 15px;
+        }
+
+        .metrics {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .metric {
+          background: #eef3fb;
+          padding: 15px;
+          text-align: center;
+          border-radius: 6px;
+        }
+
+        .metric strong { display: block; font-size: 23px; }
+        .metric span { font-size: 12px; color: #59677a; }
+
+        .issue {
+          padding: 10px;
+          margin: 8px 0;
+          background: #fff5e5;
+          border-left: 3px solid #e8a12b;
+        }
+
+        .error { color: #b42318; }
+        .success { color: #167347; }
+
+        #results { display: none; }
+
+        @media (max-width: 650px) {
+          .metrics { grid-template-columns: repeat(2, 1fr); }
+          .comparison { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>CodeWhisperer</h1>
+    <p>Java Code Analyzer and Optimizer</p>
+</header>
+
+<main>
+    <section class="panel">
+        <h2>Enter Java Code</h2>
+        <textarea
+                id="codeInput"
+                spellcheck="false"
+                placeholder="Paste your Java code here..."></textarea>
+        <button id="analyzeButton" onclick="analyzeCode()">
+            Analyze Code
+        </button>
+        <p id="status" role="status"></p>
+    </section>
+
+    <div id="results">
+        <section class="panel">
+            <h2>Analysis Results</h2>
+
+            <p class="success">Syntax: Parsed successfully</p>
+
+            <div class="metrics">
+                <div class="metric">
+                    <strong id="lines">0</strong>
+                    <span>Lines</span>
+                </div>
+                <div class="metric">
+                    <strong id="classes">0</strong>
+                    <span>Classes</span>
+                </div>
+                <div class="metric">
+                    <strong id="methods">0</strong>
+                    <span>Methods</span>
+                </div>
+                <div class="metric">
+                    <strong id="complexity">0</strong>
+                    <span>Avg. Complexity</span>
+                </div>
+            </div>
+
+            <h3>Detected Issues</h3>
+            <div id="issues"></div>
+
+            <h3>Detected Intent</h3>
+            <p id="intent"></p>
+        </section>
+
+        <section class="panel">
+            <h2>Original vs. Improved Code</h2>
+            <div class="comparison">
+                <div>
+                    <h3>Original Code</h3>
+                    <pre><code id="original"></code></pre>
+                </div>
+                <div>
+                    <h3>Improved Code</h3>
+                    <pre><code id="improved"></code></pre>
+                </div>
+            </div>
+            <p>
+                The improved code is generated using Google Gemini AI,
+                with syntax validation performed using JavaParser.
+            </p>
+        </section>
+    </div>
+</main>
+
+<script>
+    async function analyzeCode() {
+      const code = document.getElementById("codeInput").value;
+      const button = document.getElementById("analyzeButton");
+      const status = document.getElementById("status");
+
+      if (!code.trim()) {
+        status.textContent = "Please enter Java code.";
+        status.className = "error";
+        return;
+      }
+
+      button.disabled = true;
+      status.textContent = "Analyzing...";
+      status.className = "";
+      document.getElementById("results").style.display = "none";
+
+      try {
+        const response = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            language: "java",
+            useAi: true,
+            code: code
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+
+        const data = await response.json();
+        alert("Gemini status: " + data.aiExplanation);
+
+        document.getElementById("lines").textContent = data.lines;
+        document.getElementById("classes").textContent = data.classes;
+        document.getElementById("methods").textContent = data.methods;
+        document.getElementById("complexity").textContent =
+          Number(data.cyclomaticComplexity).toFixed(1);
+
+        document.getElementById("intent").textContent = data.intent;
+        document.getElementById("original").textContent = code;
+        document.getElementById("improved").textContent =
+          data.rewrittenCode;
+
+        const issuesBox = document.getElementById("issues");
+        issuesBox.replaceChildren();
+
+        if (!data.issues || data.issues.length === 0) {
+          issuesBox.textContent = "No issues detected by the current rules.";
+        } else {
+          data.issues.forEach(issue => {
+            const item = document.createElement("div");
+            item.className = "issue";
+
+            const title = document.createElement("strong");
+            title.textContent = issue.type + " (" + issue.severity + ")";
+
+            const details = document.createElement("p");
+            details.textContent =
+              "Line " + issue.line + ": " + issue.message;
+
+            const suggestion = document.createElement("p");
+            suggestion.textContent = "Suggestion: " + issue.suggestion;
+
+            item.append(title, details, suggestion);
+            issuesBox.appendChild(item);
+          });
+        }
+
+        document.getElementById("results").style.display = "block";
+        status.textContent = "Analysis completed.";
+        status.className = "success";
+
+      } catch (error) {
+        status.textContent = "Analysis failed: " + error.message;
+        status.className = "error";
+      } finally {
+        button.disabled = false;
+      }
+    }
+</script>
+
+</body>
+</html>
